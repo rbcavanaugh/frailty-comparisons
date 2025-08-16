@@ -1,0 +1,98 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  echo = FALSE,
+  warning = FALSE, 
+  error = FALSE
+)
+
+suppressPackageStartupMessages(library(tidyverse)) 
+library(fs)
+library(gt)
+```
+
+# Evaluating Frailty Index Integrity: Insights from an International Network Study
+
+## Authors
+
+**Robert Cavanaugh**<sup>1,2</sup>, **Chelsea Wong**<sup>3,4</sup>, **Louisa Smith**<sup>5,1</sup>, **Maytal Bivas-Benita**<sup>6</sup>, **Pinchas Akiva**<sup>6</sup>, **Tal El-Hay**<sup>6</sup>, **Ariela Orkaby**<sup>3,4,7</sup>, **Chen Yanover**<sup>6</sup>, **Brianne Olivieri-Mui**<sup>5,1,3</sup>
+
+## Author Affiliations
+
+1. The Roux Institute, Northeastern University, Portland, ME
+2. MGH Institute of Health Professions, Boston, MA
+3. Hebrew SeniorLife, Harvard Medical School, Roslindale, MA
+4. Beth Israel Deaconess Medical Center, Boston, MA
+5. Northeastern University, Boston, MA
+6. KI Research Institute, Kfar Malal, Israel
+7. Veterans Affairs Medical Center, Boston, MA
+
+
+## Repository Structure
+
+```{r}
+folder_notes <- c(
+  "KI" = "Frailty output",
+  "data" = "Frailty code lists", 
+  "functions" = "Custom R functions and utilities",
+  "manuscript" = "Manuscript drafts and related files",
+  "output" = "Final aggregate data and extra output"
+)
+
+# Modify tree output
+tree_lines <- capture.output(fs::dir_tree(recurse = 0))
+for(name in names(folder_notes)) {
+  tree_lines <- str_replace(tree_lines, paste0("(.*", name, ")$"), 
+                           paste0("\\1 # ", folder_notes[name]))
+}
+cat(tree_lines, sep = "\n")
+```
+## Packages used
+
+```{r}
+
+
+# Find all R files recursively
+r_files <- dir_ls(recurse = TRUE, glob = "*.R")
+
+# Extract library calls from all files
+packages <- r_files %>%
+    map(read_lines) %>%
+    map(~ paste(.x, collapse = "\n")) %>%
+    map(str_extract_all, "library\\(([^)]+)\\)|require\\(([^)]+)\\)") %>%
+    discard(~ length(.x) == 0) %>%
+    unlist() %>%
+    str_extract("(?<=\\()[^)]+(?=\\))") %>%
+    str_remove_all("['\"]") %>%
+    unique() %>%
+    discard(is.na)
+
+# Generate citations
+citations <- packages %>%
+    map_dfr(~ {
+        tryCatch({
+            cite <- citation(.x)
+            tibble(
+                package = .x,
+                citation = format(cite, style = "text")
+            )
+        }, error = function(e) {
+            tibble(package = .x, citation = paste("Citation not available for", .x))
+        })
+    })
+
+citations |> 
+    filter(package != "ohdsilab", package != "aouFI") |> 
+    gt::gt()
+
+```
+
+
+
