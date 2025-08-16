@@ -89,8 +89,11 @@ citations <- packages %>%
     })
 
 citations |> 
-    filter(package != "ohdsilab", package != "aouFI") |> 
-    gt::gt()
+    filter(package != "ohdsilab", package != "aouFI") %>%
+  mutate(citation = str_replace_all(citation, "[|]", "\\|")) %>%  # escape pipes
+  mutate(citation = str_replace_all(citation, "\n", " ")) %>%      # remove line breaks
+  mutate(citation = str_trunc(citation, width = 400))  %>%            # truncate if too long 
+  knitr::kable(format = "markdown") 
 
 ```
 
